@@ -1,4 +1,4 @@
-# 🖥️ System Monitor Tool (LSP, C++, Dokcer)
+# 🖥️ System Monitor Tool (LSP, C++, Docker)
 
 **Interactive Linux system monitor built in C++ with ncurses.**
 Features CPU & memory tracking, process management, and host/container monitoring via custom `/proc` mapping.
