@@ -1,6 +1,6 @@
-# 🖥️ System Monitor (C++17 + ncurses + Docker)
+# 🖥️ System Monitor (LSP, C++, Dokcer)
 
-**Interactive Linux system monitor built in C++17 with ncurses.**
+**Interactive Linux system monitor built in C++ with ncurses.**
 Features CPU & memory tracking, process management, and host/container monitoring via custom `/proc` mapping.
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/mrutyunjayaM18/System-Monitor-LSP-/actions)
