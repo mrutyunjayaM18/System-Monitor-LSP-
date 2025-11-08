@@ -31,4 +31,38 @@ The monitor can also run inside **Docker**, reading process data from a configur
 
 ---
 
-## 📁 Project Structure
+---
+
+## ⚙️ Build Process
+
+Below is the **complete build and run process** for both local and Docker environments.
+
+### ▶️ Run
+
+| Command | Action |
+| :--- | :--- |
+| `make build` | Build the local binary |
+| `make run` | Run locally |
+| `make docker-build` | Build Docker image |
+| `make docker-run` | Run in container (container processes only) |
+| `make docker-run-host` | Run container monitoring host’s `/proc` |
+| `make clean` | Remove local binary |
+| `make docker-clean` | Remove Docker image |
+| `make help` | Display available make targets |
+
+### ⌨️ Keyboard Controls
+
+| Key | Action |
+| :--- | :--- |
+| `q` | Quit |
+| `s` | Toggle sorting between CPU% and MEM% |
+| `o` | Toggle ascending/descending order |
+| `+` | Increase refresh interval |
+| `-` | Decrease refresh interval |
+| `k` | Enter PID to kill (sends `SIGTERM`) |
+
+### 🧼 Cleanup
+
+```bash
+make clean          # Remove compiled binary
+make docker-clean   # Remove Docker image
