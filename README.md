@@ -67,7 +67,10 @@ Below is the **complete build and run process** for both local and Docker enviro
 ```bash
 make clean          # Remove compiled binary
 make docker-clean   # Remove Docker image
+```
+---
 
 ### 🚀 One-Line Build & Run (Host Monitor)
-
+```bash
 make docker-run-host
+```
