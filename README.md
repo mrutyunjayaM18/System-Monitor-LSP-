@@ -7,7 +7,7 @@ Features CPU & memory tracking, process management, and host/container monitorin
 
 ## 📖 Overview
 
-**System Monitor** is a lightweight, interactive Linux process viewer built in **C++17** using **ncurses**.
+**System Monitor** is a lightweight, interactive Linux process viewer built in **C++** using **ncurses**.
 It displays live process information — CPU, memory usage, and process state — similar to `top`.
 The monitor can also run inside **Docker**, reading process data from a configurable `/proc` path, making it ideal for **host or container monitoring**.
 
