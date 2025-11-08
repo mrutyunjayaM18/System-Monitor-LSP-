@@ -1,6 +1,5 @@
-// monitor.cpp
+// monitor.cpp - patched to remove unused-variable warnings
 // Simple system monitor (top-like) in C++ using /proc and ncurses.
-// This patched version reads PROC_ROOT (env var) and uses it instead of hard-coded "/proc".
 // Build: g++ -std=c++17 monitor.cpp -o monitor -lncurses
 
 #include <ncurses.h>
@@ -123,8 +122,6 @@ bool read_proc_stat(int pid, ProcSnapshot &snap, long long &starttime) {
     long long utime = atoll(tokens[13].c_str()); // token index 13 (0-based) corresponds to field 14
     long long stime = atoll(tokens[14].c_str()); // field 15
     long long _starttime = atoll(tokens[21].c_str()); // field 22
-    long long rss = 0;
-    if (tokens.size() >= 23) rss = atoll(tokens[22].c_str()); // field 23? We'll compute rss from statm instead for reliability if needed.
     snap.utime = utime;
     snap.stime = stime;
     starttime = _starttime;
@@ -209,6 +206,10 @@ vector<int> list_pids() {
 }
 
 vector<Process> gather_processes(long long total_cpu_delta, long long mem_total_kb, long long mem_available_kb, long long clk_tck, long long page_size) {
+    // silence intentionally unused parameters to avoid compiler warnings
+    (void)mem_available_kb;
+    (void)clk_tck;
+
     vector<Process> procs;
     vector<int> pids = list_pids();
     for (int pid : pids) {
@@ -251,6 +252,9 @@ vector<Process> gather_processes(long long total_cpu_delta, long long mem_total_
 }
 
 void draw_header(WINDOW *w, int width, const string &sort_by, bool descending, int interval) {
+    // width currently unused; mark explicitly to silence warnings (could also be used to center text)
+    (void)width;
+
     werase(w);
     mvwprintw(w, 0, 0, "SimpleSysMon - refresh: %d s | sort: %s %s | PROC_ROOT: %s | q:quit  s:toggle sort  k:kill PID",
               interval,
