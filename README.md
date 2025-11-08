@@ -1,4 +1,4 @@
-# 🖥️ System Monitor (LSP, C++, Dokcer)
+# 🖥️ System Monitor Toool (LSP, C++, Dokcer)
 
 **Interactive Linux system monitor built in C++ with ncurses.**
 Features CPU & memory tracking, process management, and host/container monitoring via custom `/proc` mapping.
