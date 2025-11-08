@@ -1,4 +1,4 @@
-# Makefile for monitor (local build) and Docker image (uses provided Dockerfile)
+
 
 # Compiler & flags
 CXX := g++
