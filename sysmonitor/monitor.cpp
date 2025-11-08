@@ -1,6 +1,3 @@
-// monitor.cpp - patched to remove unused-variable warnings
-// Simple system monitor (top-like) in C++ using /proc and ncurses.
-// Build: g++ -std=c++17 monitor.cpp -o monitor -lncurses
 
 #include <ncurses.h>
 #include <unistd.h>
@@ -52,7 +49,7 @@ static std::string get_proc_root() {
     return std::string("/proc");
 }
 static std::string PROC_ROOT = get_proc_root();
-// -----------------------------------------------------------
+
 
 long long parse_total_cpu() {
     std::ifstream f(PROC_ROOT + std::string("/stat"));
@@ -100,9 +97,7 @@ bool read_proc_stat(int pid, ProcSnapshot &snap, long long &starttime) {
     if (!f) return false;
     string content;
     getline(f, content);
-    // /proc/[pid]/stat: many fields. We will parse carefully.
-    // Field indices: 1 pid, 2 comm (may have spaces inside parentheses), 3 state, ... utime at 14, stime 15, starttime 22, rss at 24 (in pages)
-    // Approach: find the parentheses-enclosed comm, then split remainder.
+    
     size_t lparen = content.find('(');
     size_t rparen = content.rfind(')');
     if (lparen == string::npos || rparen == string::npos || rparen <= lparen) return false;
@@ -111,12 +106,11 @@ bool read_proc_stat(int pid, ProcSnapshot &snap, long long &starttime) {
     string after = content.substr(rparen+1);
     std::istringstream iss(after);
     string state;
-    // fields after comm: state (1), then many fields. We need to count to utime (14th overall)
-    // We'll read into a vector of tokens for simplicity:
+    
     vector<string> tokens;
     string tok;
     while (iss >> tok) tokens.push_back(tok);
-    // tokens[0] is state
+   
     if (tokens.size() < 22) return false; // need at least up to starttime
     state = tokens[0];
     long long utime = atoll(tokens[13].c_str()); // token index 13 (0-based) corresponds to field 14
@@ -129,12 +123,12 @@ bool read_proc_stat(int pid, ProcSnapshot &snap, long long &starttime) {
 }
 
 bool read_cmd_and_user(int pid, string &cmd, string &state, uid_t &uid_out, long long &rss_pages) {
-    // Read /proc/<pid>/cmdline for cmd; if empty, use comm.
+    
     string base = PROC_ROOT + "/" + to_string(pid);
     string cmdline_path = base + "/cmdline";
     std::ifstream f(cmdline_path, ios::in | ios::binary);
     if (f) {
-        // read entire file and replace NULs with spaces
+       
         std::string all;
         char c;
         while (f.get(c)) {
@@ -144,12 +138,12 @@ bool read_cmd_and_user(int pid, string &cmd, string &state, uid_t &uid_out, long
         if (!all.empty()) cmd = all;
     }
     if (cmd.empty()) {
-        // fallback to comm
+        
         string comm_path = base + "/comm";
         std::ifstream fc(comm_path);
         if (fc) getline(fc, cmd);
     }
-    // read status for uid and state and VmRSS
+    
     string status_path = base + "/status";
     std::ifstream fs(status_path);
     uid_out = 0;
@@ -167,17 +161,17 @@ bool read_cmd_and_user(int pid, string &cmd, string &state, uid_t &uid_out, long
             string label; string st; iss >> label >> st;
             state = st;
         } else if (line.rfind("VmRSS:", 0) == 0) {
-            // VmRSS: value kB. We'll pick this if present.
+           
             std::istringstream iss(line);
             string label; long long val; string unit;
             iss >> label >> val >> unit;
-            // convert kB to pages later using page size.
+           
             long long kbytes = val;
             long long page_size_kb = sysconf(_SC_PAGESIZE) / 1024;
             if (page_size_kb > 0) rss_pages = (kbytes + page_size_kb - 1) / page_size_kb;
         }
     }
-    // If VmRSS not found, read statm
+    
     if (rss_pages == 0) {
         string statm_path = base + "/statm";
         std::ifstream fm(statm_path);
@@ -206,7 +200,7 @@ vector<int> list_pids() {
 }
 
 vector<Process> gather_processes(long long total_cpu_delta, long long mem_total_kb, long long mem_available_kb, long long clk_tck, long long page_size) {
-    // silence intentionally unused parameters to avoid compiler warnings
+    
     (void)mem_available_kb;
     (void)clk_tck;
 
@@ -223,25 +217,25 @@ vector<Process> gather_processes(long long total_cpu_delta, long long mem_total_
         p.cmd = cmd;
         p.state = state;
         p.user = uid_to_user(uid);
-        // read stat snapshot
+       
         ProcSnapshot snap;
         long long starttime;
         if (!read_proc_stat(pid, snap, starttime)) continue;
         p.utime = snap.utime;
         p.stime = snap.stime;
         p.rss = rss_pages;
-        // compute cpu percent using last_proc_snap
+       
         double cpu_pct = 0.0;
         auto it = last_proc_snap.find(pid);
         if (it != last_proc_snap.end() && total_cpu_delta > 0) {
             long long prev_total = it->second.total_time();
             long long curr_total = snap.total_time();
             long long proc_delta = curr_total - prev_total;
-            // CPU% = (proc_delta / total_cpu_delta) * 100
+           
             cpu_pct = (double)proc_delta * 100.0 / (double)total_cpu_delta;
         }
         p.cpu = cpu_pct;
-        // memory percent: rss_pages * page_size / mem_total_bytes
+        
         long long rss_bytes = rss_pages * page_size;
         long long mem_total_bytes = mem_total_kb * 1024LL;
         double mem_pct = (mem_total_bytes > 0) ? (double)rss_bytes * 100.0 / (double)mem_total_bytes : 0.0;
@@ -252,7 +246,7 @@ vector<Process> gather_processes(long long total_cpu_delta, long long mem_total_
 }
 
 void draw_header(WINDOW *w, int width, const string &sort_by, bool descending, int interval) {
-    // width currently unused; mark explicitly to silence warnings (could also be used to center text)
+    
     (void)width;
 
     werase(w);
@@ -261,7 +255,7 @@ void draw_header(WINDOW *w, int width, const string &sort_by, bool descending, i
               sort_by.c_str(),
               descending ? "DESC" : "ASC",
               PROC_ROOT.c_str());
-    // column header
+   
     mvwprintw(w, 1, 0, "%5s %-8s %6s %6s %-7s %s", "PID", "USER", "CPU%", "MEM%", "STATE", "COMMAND");
     wrefresh(w);
 }
@@ -271,7 +265,7 @@ void draw_processes(WINDOW *w, const vector<Process> &procs, int start_row, int 
     int displayed = 0;
     for (const auto &p : procs) {
         if (displayed >= rows) break;
-        // sanitize cmd length
+        
         string cmd = p.cmd;
         if ((int)cmd.size() > cols - 40) cmd = cmd.substr(0, cols - 43) + "...";
         mvwprintw(w, line, 0, "%5d %-8s %6.2f %6.2f %-7s %s",
@@ -290,24 +284,24 @@ void draw_processes(WINDOW *w, const vector<Process> &procs, int start_row, int 
 int main() {
     // config
     int interval_seconds = 2;
-    string sort_by = "CPU"; // or "MEM"
+    string sort_by = "CPU";
     bool descending = true;
 
     // setup ncurses
     initscr();
     cbreak();
     noecho();
-    nodelay(stdscr, TRUE); // non-blocking getch
+    nodelay(stdscr, TRUE); 
     keypad(stdscr, TRUE);
     curs_set(0);
 
     long long clk_tck = sysconf(_SC_CLK_TCK);
     long long page_size = sysconf(_SC_PAGESIZE);
 
-    // initial total cpu
+    
     last_total_cpu = parse_total_cpu();
 
-    // initial process snapshots
+    
     vector<int> pids_init = list_pids();
     for (int pid : pids_init) {
         ProcSnapshot snap;
@@ -322,15 +316,15 @@ int main() {
         int rows, cols;
         getmaxyx(stdscr, rows, cols);
         erase();
-        // read total cpu now, compute delta since last
+        
         long long total_cpu_now = parse_total_cpu();
         long long total_cpu_delta = total_cpu_now - last_total_cpu;
-        // read mem
+       
         long long mem_total_kb=0, mem_avail_kb=0;
         read_mem_info(mem_total_kb, mem_avail_kb);
-        // gather processes (reads current stat and cmd/status)
+        
         vector<Process> procs = gather_processes(total_cpu_delta, mem_total_kb, mem_avail_kb, clk_tck, page_size);
-        // update last_proc_snap for next iteration
+        
         last_proc_snap.clear();
         for (const auto &p : procs) {
             ProcSnapshot snap;
@@ -340,7 +334,7 @@ int main() {
         }
         last_total_cpu = total_cpu_now;
 
-        // sorting
+      
         if (sort_by == "CPU") {
             sort(procs.begin(), procs.end(), [&](const Process &a, const Process &b) {
                 if (descending) return a.cpu > b.cpu;
@@ -353,11 +347,11 @@ int main() {
             });
         }
 
-        // draw header and processes
+        
         draw_header(stdscr, cols, sort_by, descending, interval_seconds);
         draw_processes(stdscr, procs, 2, rows - 3, cols);
 
-        // handle input (non-blocking)
+      
         int ch;
         int sleep_ms = interval_seconds * 1000 / 10; // we'll loop 10 times checking input for more responsiveness
         for (int i = 0; i < 10; ++i) {
@@ -391,7 +385,7 @@ int main() {
                     }
                     getch();
                 }
-                // restore
+               
                 nodelay(stdscr, TRUE);
                 noecho();
                 curs_set(0);
